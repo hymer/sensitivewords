@@ -18,7 +18,6 @@ public class Finder {
 	private static Set<String> WORDS = new HashSet<String>();
 	// 由敏感词生成的字树
 	private static Map<String, Map> TREE = new ConcurrentHashMap<String, Map>();
-
 	// 默认敏感词分割符
 	public static final String DEFAULT_SEPARATOR = ",";
 	/* 在树当中标志一个词的结束 */
@@ -27,10 +26,16 @@ public class Finder {
 	public static final String WORD_VALUE = "v";
 	// 敏感词长度标记
 	public static final String WORD_LENGTH = "l";
+	// 默认替换符
+	public static final char DEFAULT_REPLACEMENT = '*';
 	// 默认起始标记
 	public static final String DEFAULT_START_TAG = "<font color=\"red\">";
 	// 默认结束标记
 	public static final String DEFAULT_END_TAG = "</font>";
+
+	public Finder(String[] words) {
+		addSensitiveWords(words);
+	}
 
 	/**
 	 * 删除所有敏感词
@@ -44,12 +49,11 @@ public class Finder {
 	 * 
 	 * 添加敏感词
 	 * 
-	 * @author hewang
+	 * @author hymer
 	 * @param words
 	 */
-	public static void addSensitiveWords(String... words) {
+	public static void addSensitiveWords(String[] words) {
 		if (words == null || words.length == 0) {
-			System.out.println("没有导入任何敏感词。");
 			return;
 		}
 		check(words);
@@ -58,21 +62,9 @@ public class Finder {
 
 	/**
 	 * 
-	 * 添加敏感词，默认使用,分割
-	 * 
-	 * @author hewang
-	 * @param words
-	 */
-	public static void addSensitiveWords(String words) {
-		check(words);
-		addSensitiveWords(words, DEFAULT_SEPARATOR);
-	}
-
-	/**
-	 * 
 	 * 添加敏感词
 	 * 
-	 * @author hewang
+	 * @author hymer
 	 * @param words
 	 * @param separator
 	 */
@@ -86,9 +78,57 @@ public class Finder {
 
 	/**
 	 * 
+	 * 添加敏感词，默认使用,分割
+	 * 
+	 * @author hymer
+	 * @param words
+	 */
+	public static void addSensitiveWords(String words) {
+		check(words);
+		addSensitiveWords(words, DEFAULT_SEPARATOR);
+	}
+
+	/**
+	 * 删除敏感词
+	 * 
+	 * @param words
+	 */
+	public static void removeSensitiveWords(String words) {
+		check(words);
+		removeSensitiveWords(words, DEFAULT_SEPARATOR);
+	}
+
+	/**
+	 * 删除敏感词
+	 * 
+	 * @param words
+	 */
+	public static void removeSensitiveWords(String words, String separator) {
+		if (words != null && !"".equals(words.trim())) {
+			check(words);
+			String[] sensitiveWords = words.split(separator);
+			removeWords(sensitiveWords);
+		}
+	}
+
+	/**
+	 * 删除敏感词
+	 * 
+	 * @param words
+	 */
+	public static void removeSensitiveWords(String[] words) {
+		if (words == null || words.length == 0) {
+			return;
+		}
+		check(words);
+		removeWords(words);
+	}
+
+	/**
+	 * 
 	 * 找出文本中的敏感词
 	 * 
-	 * @author hewang
+	 * @author hymer
 	 * @param text
 	 * @return
 	 */
@@ -97,23 +137,46 @@ public class Finder {
 	}
 
 	/**
+	 * 替换文本中的敏感词
+	 * 
+	 * @param text
+	 *            含敏感词的文本
+	 * @return
+	 */
+	public static String replace(String text) {
+		return new TextAnalysis().replace(TREE, text, DEFAULT_REPLACEMENT);
+	}
+
+	/**
+	 * 替换文本中的敏感词
+	 * 
+	 * @param text
+	 *            含敏感词的文本
+	 * @param replacement
+	 *            替换字符
+	 * @return
+	 */
+	public static String replace(String text, Character replacement) {
+		return new TextAnalysis().replace(TREE, text, replacement);
+	}
+
+	/**
 	 * 
 	 * 过滤文本，并标记出敏感词，默认使用HTML中红色font标记
 	 * 
-	 * @author hewang
+	 * @author hymer
 	 * @param text
 	 * @return
 	 */
 	public static String filter(String text) {
-		return new TextAnalysis().mark(TREE, text, DEFAULT_START_TAG,
-				DEFAULT_END_TAG);
+		return new TextAnalysis().mark(TREE, text, DEFAULT_START_TAG, DEFAULT_END_TAG);
 	}
 
 	/**
 	 * 
 	 * 过滤文本，并标记出敏感词
 	 * 
-	 * @author hewang
+	 * @author hymer
 	 * @param text
 	 * @param startTag
 	 * @param endTag
@@ -123,21 +186,10 @@ public class Finder {
 		return new TextAnalysis().mark(TREE, text, startTag, endTag);
 	}
 
-	/**
-	 * 
-	 * 得到敏感字数
-	 * 
-	 * @author hewang
-	 * @return 敏感字树
-	 */
-	public static Map<String, Map> getTree() {
-		return TREE;
-	}
-
 	private static void check(String... words) {
 		for (String word : words) {
 			if (word != null && word.contains(TREE_END_KEY)) {
-				throw new RuntimeException("不能包含非法字符：" + TREE_END_KEY);
+				throw new RuntimeException("包含非法字符：" + TREE_END_KEY);
 			}
 		}
 	}
@@ -156,7 +208,18 @@ public class Finder {
 				}
 			}
 		}
-		System.out.println("成功导入" + sensitiveWords.length + "个敏感词。");
+		System.out.println("当前敏感词数量：" + WORDS.size());
+	}
+
+	private static void removeWords(String... sensitiveWords) {
+		for (String word : sensitiveWords) {
+			if (word != null && !word.trim().equals("")) {
+				word = word.trim();
+				WORDS.remove(word);
+			}
+		}
+		TREE.clear();
+		addWords(WORDS.toArray(new String[WORDS.size()]));
 	}
 
 	@SuppressWarnings("unused")
@@ -170,7 +233,7 @@ public class Finder {
 			for (int i = 0; i < level; i++) {
 				System.out.print("-");
 			}
-			System.out.print("" + next + "\n");
+			System.out.print(next + "\n");
 			Object tmp = wordTree.get(next);
 			if (tmp instanceof Map) {
 				printTree((Map) tmp, level + 1);
