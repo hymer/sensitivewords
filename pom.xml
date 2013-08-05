@@ -47,7 +47,7 @@
 			<version>5.1.16</version>
 		</dependency>
 	</dependencies>
-
+<!-- 
 	<distributionManagement>
 		<snapshotRepository>
 			<id>snapshot</id>
@@ -77,5 +77,5 @@
 			<url>http://10.120.99.214:8080/nexus/content/repositories/releases/</url>
 		</repository>
 	</repositories>
-
+ -->
 </project>
