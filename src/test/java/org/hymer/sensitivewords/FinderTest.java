@@ -19,6 +19,14 @@ public class FinderTest {
 	@After
 	public void tearDown() throws Exception {
 	}
+	
+	@Test
+	public void testFilter() {
+		Finder.addSensitiveWords(new String[]{"核武器", "武器装备"});
+		String s = "核武器装备起来了。";
+		String r = Finder.filter(s);
+		System.out.println(r);
+	}
 
 	@Test
 	public void testSub() {
@@ -99,7 +107,7 @@ public class FinderTest {
 				"平了啊", "世界啊", "，世", "世事和平" });
 		long begin = System.currentTimeMillis();
 
-		String text = "你好世";
+//		String text = "你好世";
 //		Set<String> result = Finder.find(text);
 		// String result = Finder.replace(text);
 		// String result = Finder.filter(text);
